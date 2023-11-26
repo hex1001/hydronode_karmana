@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Config Version="2"><Driver Caption="Modbus driver" Comment="" NodeType="2"><Node1 Caption="Узел TCP" Comment="" NodeType="0" IP="10.0.6.10" Port="502" DriverMode="0"/></Driver></Config>

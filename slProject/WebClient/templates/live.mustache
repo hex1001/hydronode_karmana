@@ -1,0 +1,209 @@
+﻿<div class="container main-container">
+    <div class="card">
+        <div class="card-body" id="rowContainer">
+            <div class="alert alert-warning connection-failed">{{localization.lost-connection}}</div>
+            <div class="row d-none" id="actionBar">
+                <div class="col-12">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="btn-screen" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{localization.live-screens}}</button>
+                        <div class="dropdown-menu" id="screenDropDown" aria-labelledby="btn-screen">
+                            <!-- screen button classed as dropdown-item must be here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row loading-spin" id="loadSpin">
+                <div class="col-12 text-center">
+                    <span><i class="fa fa-spinner fa-spin"></i></span>
+                </div>
+            </div>
+            <div class="row d-none" id="channelLiveTable">
+                <div class="col-md-7 order-md-1 col-sm-12 order-2">
+                    <h3 class="text-center">{{localization.tag-view-header}}</h2>
+                        <div class="table-responsive-sm">
+                            <table class="table table-hover channel-view">
+                                <thead class="thead-light"><tr><th>{{localization.tag-name}}</th><th>{{localization.tag-value}}</th><th></th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-5 order-md-2 col-sm-12 order-1">
+                        <h3 class="text-center">{{localization.accident-view-header}}</h2>
+                            <div class="table-responsive-sm">
+                                <table class="table table-hover accident-view">
+                                    <thead class="thead-light"><tr class="text-center"><th>{{localization.tag-name}}</th><th>{{localization.tag-value}}</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sl-modal-backdrop sl-modal-backdrop-screen d-none" id="screenViewModal">
+            <div class="header">
+                <h5 class="header-title"><span class="screen-name"></span></h5>
+                <button type="button" class="close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="body"></div> 
+        </div>
+
+        <div class="modal fade" id="channelValueEditor" tabindex="-1" role="dialog" aria-labelledby="modal-title-a" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modal-title-a"><span class="channel-name"></span>{{localization.tag-patch-header}}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <span>{{localization.tag-patch-last-value}}: <span class="channel-value"></span></span>
+                        <div class="form-group"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{localization.tag-patch-cancel}}</button>
+                        <button type="button" id="editChannelValueButton" class="btn btn-primary" data-loading-text="<i class='fa fa-spinner fa-spin'></i>" data-toggle="tooltip" data-placement="left">{{localization.tag-patch-apply}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sl-modal-backdrop d-none" id="loadingModal">
+            <div class="container h-100">
+                <div class="row h-100 justify-content-center align-items-center">
+                    <div class="bg-secondary rounded fa-3x px-2 text-center align-center">
+                        <i class="fa fa-spinner fa-spin"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="digitalEditTemplate">
+    <input type="number"><button>ОК</button>
+</template>
+
+<div id="scheduleRangeEditor" class="d-none">
+    <form>
+        <div class="form-group">
+          <label for="rangeDialog_startTime" class="col-form-label">{{localization.schedule-range-start-time}}</label>
+          <input type="time" id="rangeDialog_startTime" class="form-control start-time" pattern="[0-9]{2}:[0-9]{2}">
+        </div>
+
+        <div class="form-group">
+          <label for="rangeDialog_endTime" class="col-form-label">{{localization.schedule-range-end-time}}</label>
+          <input type="time" id="rangeDialog_endTime" class="form-control end-time" pattern="[0-9]{2}:[0-9]{2}">
+        </div>
+    </form>
+
+    <div class="issues"></div>
+</div>
+
+<div class="schedule-day d-none" id="scheduleDayTemplate">
+    <div class="gutter"><p></p></div>
+    <div class="field">
+      <div class="schedule-day-hover-overlay"></div>
+      <div class="schedule-field">
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div>
+        <div class="hour"></div> 
+      </div>
+    </div>
+</div>
+
+<div class="schedule d-none" id="scheduleTemplate">
+    <div class="schedule-days-holder">
+        <div class="schedule-days"></div>
+        <div class="gutter-end"></div>
+    </div>
+    <div class="schedule-toolbar">
+      <span></span>
+      <div class="schedule-buttons">
+        <button class="enable-btn" tabindex="-1" title="{{localization.schedule-enable-button-enable}}"><div></div></button>
+        <button class="gap add-btn" title="{{localization.schedule-add-button-hint}}"><div></div></button>
+        <button class="edit-btn" title="{{localization.schedule-edit-button-hint}}"><div></div></button>
+        <button class="delete-btn" title="{{localization.schedule-delete-button-hint}}"><div></div></button>
+        <button class="gap cancel-btn" title="{{localization.schedule-cancel-button-hint}}"><div></div></button>
+        <button class="ok-btn" disabled title="{{localization.schedule-ok-button-hint}}"><div></div></button>
+      </div>
+    </div>
+</div>
+
+<template id="recipeEditorTemplate">
+    <style></style>
+    <div class="recipe-list">
+        <!-- <div class="recipe">Hi!</div> -->
+    </div>
+    <recipe-state-list class="d-none"></recipe-state-list>
+
+    <div class="screen-toolbar">
+        <button class="gap apply-btn" disabled title="{{localization.recipe-apply-button-hint}}"><div></div></button>
+        <button class="gap add-btn" title="{{localization.recipe-add-button-hint}}"><div></div></button>
+        <button class="edit-btn" disabled title="{{localization.recipe-edit-button-hint}}"><div></div></button>
+        <button class="delete-btn" disabled title="{{localization.recipe-delete-button-hint}}"><div></div></button>
+        <button class="gap cancel-btn d-none"><div></div></button>
+        <button class="ok-btn d-none"><div></div></button>
+    </div>
+</template>
+
+<template id="recipeStateListTemplate">
+    <meta http-equiv="cache-control" content="no-cache" />
+    <link rel="stylesheet" type="text/css" href="/css/recipeStateList.css" />
+    <header>
+    <div class="col col-channel">{{localization.recipe-state-list-channel-column}}</div>
+    <div class="col col-value">{{localization.recipe-state-list-value-column}}</div>
+    </header>
+    <content>
+      <table>
+      <tbody>
+        <!-- <tr><td>*Канал*</td><td>45</td></tr> -->
+      </tbody>
+      </table>
+    </content>
+</template>
+
+<template id="recipeAddDialogContentTemplate">
+    <form>
+        <div class="form-group">
+          <label for="rangeAddDialog_name" class="col-form-label">{{localization.input-label-item-name}}: </label>
+          <input id="recipeAddDialog_name" class="form-control">
+        </div>
+    </form>
+
+    <div class="issues"></div>
+</template>
+
+<template id="comboboxDropdownTemplate">
+    <link rel="stylesheet" type="text/css" href="/css/comboboxDropDown.css" />
+    <style></style>
+</template>
+
+<combobox-dropdown></combobox-dropdown>
+
+<script type="text/javascript" src="/js/live.bundle.js"></script>

@@ -1,0 +1,706 @@
+
+input[type="time"] {
+  -webkit-appearance: none;
+}
+
+table.channel-view {
+  table-layout: fixed;
+}
+
+table.channel-view td, table.channel-view th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+table.channel-view tr td:first-child {
+  text-align: left;
+}
+
+table.channel-view tr td:nth-child(2) {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+table.channel-view td, table.accident-view td {
+  padding: .2rem;
+}
+
+table.channel-view td.button-bar {
+  white-space: nowrap;
+}
+
+.connection-failed {
+  display: none;
+}
+
+.loading-spin span {
+  color: dodgerblue;
+  font-size: 16pt;
+}
+
+.modal-full {
+  min-width: 100%;
+  margin: 0;
+}
+
+.modal-full .modal-content {
+  min-height: 100vh;
+}
+
+.sl-modal-open {
+  overflow: hidden;
+}
+
+.sl-modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 910;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.sl-modal-backdrop-screen {
+  z-index: 960;
+  display: flex;
+  flex-direction: column;
+}
+
+.sl-modal-backdrop-screen .header {
+  display: flex;
+  -ms-flex-align: start;
+  align-items: flex-start;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  padding: .4rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #fff;
+
+  /* for Firefox */
+  min-height: 0;
+}
+
+.sl-modal-backdrop-screen .header button {
+  padding-top: .1rem;
+}
+
+.sl-modal-backdrop-screen .header-title {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.sl-modal-backdrop-screen .body {
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+
+  /* for Firefox */
+  min-height: 0;
+}
+
+button > span.failed-load-screen {
+  position: relative;
+  top: 4px;
+}
+
+.event-table {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.event-table header {
+  flex: 0 1 auto;
+  text-align: center;
+}
+
+.event-table content {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.event-table content table {
+  width: 100%;
+  table-layout: fixed;
+  white-space: nowrap;
+}
+
+.event-table content table td, .event-table content table th {
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-indent: .75rem;
+  padding: .1rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  background-clip: padding-box;
+}
+
+@media only screen and (max-width: 767.98px) {
+  .event-table content table td {
+    padding: .75rem .1rem;
+  }
+}
+
+.event-log {
+  display: flex;
+  padding: 1px;
+}
+
+.event-log aside {
+  flex: 0 1 30px; /* by content */
+  padding: 1px;
+}
+
+.event-log aside button {
+  width: 28px;
+  height: 28px;
+}
+
+.event-log main {
+  flex: 1; /* remaining space */
+}
+
+.event-log-toolbar-right {
+  flex-direction: row-reverse;
+}
+
+.event-log-toolbar-right aside {
+  margin-left: 1px;
+}
+
+.event-log-toolbar-top {
+  flex-direction: column;
+}
+
+.event-log-toolbar-left aside {
+  margin-right: 1px;
+}
+
+.event-log-toolbar-top aside {
+  margin-bottom: 1px;
+}
+
+.event-log-toolbar-bottom {
+  flex-direction: column-reverse;
+}
+
+.event-log-toolbar-bottom aside {
+  margin-top: 1px;
+}
+
+.flat-button {
+  margin: 1px;
+  outline: 1px solid #A2C7E4;
+  border: 1px solid #b6dbf8;
+  background: linear-gradient(#DADADA, white);
+  padding: 0;
+  line-height: 0; /* for properly vertical image indentation */
+}
+
+.flat-button:hover {
+  outline: 1px solid #3b7fb7;
+  border: 1px solid #8bcfff;
+  background: linear-gradient(#a2c7e4, #d4f9ff);
+  cursor: pointer;
+}
+
+.flat-button:active {
+  outline: 1px solid #3b7fb7;
+  border: 1px solid #8bcfff;
+  background: linear-gradient(#d4f9ff, #a2c7e4);
+  transition: all 0.5s ease-in-out;
+}
+
+.flat-button:active * {
+  transform: translateY(1px);
+}
+
+.modal-content.bg-error {
+  background-color: #ea6572;
+}
+
+.modal-content.bg-error .modal-header {
+  border-bottom-color: #b55a62;
+}
+
+.modal-content.bg-error .modal-footer {
+  border-top-color: #b55a62;
+}
+
+.digital-edit {
+  display: flex;
+  background-color: #a5a5a5;
+  border: 1px solid #a5a5a5;
+}
+
+.digital-edit[framed] {
+  border: 5px solid #a5a5a5;
+}
+
+.digital-edit button {
+  flex: 0 0 30px;
+  background: linear-gradient(white, #cdcdcd);
+  border: 1px solid white;
+  outline: 1px solid gray;
+  margin: 1px;
+  padding: 1px 6px;
+  font: inherit;
+  color: inherit;
+}
+
+.digital-edit button:hover {
+  background: linear-gradient(white, #979797);
+  outline-color: #A5A5A5;
+  color: #3e3e3e;
+}
+
+.digital-edit button:disabled {
+  color: red;
+}
+
+.digital-edit button:active {
+  background: linear-gradient(#a7a7a7, white);
+}
+
+.digital-edit button([hidden]) {
+  display: none;
+}
+
+.digital-edit input {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font: inherit;
+  color: inherit;
+}
+
+.digital-edit input:disabled {
+  color: red;
+}
+
+.schedule {
+  width: 80rem;
+  height: 20rem;
+  display: flex;
+  flex-direction: column;
+  background-color: red;
+}
+
+schedule-ruler {
+  flex: 0 0 24px;
+  background-color: #c7c7c7;
+  position: relative;
+}
+
+schedule-ruler svg {
+  width: 100%;
+  height: 24px;
+}
+
+schedule-ruler svg .tick {
+  stroke: black;
+  stroke-width: 1px;
+}
+
+schedule-ruler svg .subtick {
+  stroke: black;
+  stroke-width: 1px;
+}
+
+schedule-ruler svg .label {
+  text-anchor: middle;
+  font: 11px Tahoma;
+}
+
+schedule-ruler svg .label:last-of-type {
+  text-anchor: end;
+}
+
+schedule-ruler > .range-box {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 4px 0 45px;
+}
+
+schedule-ruler .range {
+  background: rgba(0, 0, 0, 0.4);
+  position: relative;
+  margin-top: 2px;
+  height: 24px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 20px;
+}
+
+schedule-ruler .range span {
+   color: white;
+   font: 11px Tahoma;
+}
+
+.schedule-toolbar {
+  background-color: #c7c7c7;
+  flex: 0 0 35px;
+  display: flex;
+  align-items: center;
+  font: 8pt Tahoma;
+}
+
+.schedule-toolbar span {
+  flex:  0 0 120px;
+  margin-left: 5px;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedule-buttons {
+  display: flex;
+  align-self: stretch;
+  flex: 1;
+  justify-content: flex-end;
+  padding: 0 4px 0 0;
+}
+
+.schedule-buttons button {
+  background-color: #a8a8a8;
+  border: 0px;
+  margin-left: 3px;
+  min-width: 35px;
+  font: 8pt Tahoma;
+  color: black;
+}
+
+.schedule-buttons button > div {
+  width: 24px;
+  height: 24px;
+  background-image: url('/img/ico/icons_light.png');
+}
+
+.schedule-buttons button:active:enabled > div {
+  margin: 1px 0 0 0;
+}
+
+.schedule-buttons.dark-btn button > div {
+  background-image: url('/img/ico/icons_dark.png');
+}
+
+.schedule-buttons button:hover {
+  background-color: #c2c2c2;
+}
+
+.schedule-buttons button:active {
+  background-color: #bdbdbd;
+}
+
+.schedule-buttons button:disabled {
+  background-color: #e0e0e0;
+}
+
+.schedule-days-holder {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.schedule-days-holder > .gutter-end {
+  flex: 0 0 4px;
+  background-color: aliceblue;
+}
+
+.schedule-days {
+  background-color: #f0f0f0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-day {
+  flex: 1;
+  display: flex;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.schedule-days .schedule-day:last-child {
+  border-bottom: none;
+}
+
+.gutter-day {
+  flex: 1;
+  display: flex;
+}
+
+.schedule-day .gutter {
+  flex: 0 0 45px;
+  background-color: #bdbdbd;
+  display: flex;
+}
+
+.schedule-day .gutter-end {
+  flex: 0 0 4px;
+  background-color: #bdbdbd;
+}
+
+.schedule-day .gutter p {
+  margin: auto;
+  text-align: center;
+  font: 12pt Arial;
+  color: white;
+  
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+
+   /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.schedule-day .field {
+  background-color: #d6d6d6;
+  flex: 1;  
+  position: relative; /* for .schedule-range position */
+}
+
+.schedule-field {
+  display: flex;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.schedule-day .field .hour {
+  flex: 1;
+  border-right: 1px solid rgba(240, 240, 240, 0.6);
+}
+
+.schedule-day .field .hour:last-child {
+  border-right: none;
+}
+
+.schedule-day-hover-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.schedule-day .field:hover > .schedule-day-hover-overlay {
+  background-color: rgba(143, 143, 143, 0.05);
+}
+
+.schedule-grid {
+  background-color: #d6d6d6;
+  flex: 1;
+}
+
+.schedule-range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.schedule-range-adding {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(38, 38, 38, 0.7);
+  border: 1px solid rgba(84, 84, 84, 0.5);
+  outline: 1px solid rgba(84, 84, 84, 0.5);
+}
+
+.d-none {
+  display: none;
+}
+
+.left-marker {
+  float: left;
+  height: 100%;
+  cursor: ew-resize;
+  width: 8px;
+}
+
+.right-marker {
+  height: 100%;
+  float: right;
+  cursor: ew-resize;
+  width: 8px;
+  margin-right: -4px;
+}
+
+.screen-toolbar {
+  background-color: #c7c7c7;
+  flex: 0 0 35px;
+  display: flex;
+  font: 8pt Tahoma;
+  justify-content: flex-end;
+}
+
+.screen-toolbar button {
+  background-color: #a8a8a8;
+  border: 0px;
+  margin-left: 3px;
+  min-width: 35px;
+  font: 8pt Tahoma;
+  color: black;
+
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
+
+.screen-toolbar button > div {
+  width: 24px;
+  height: 24px;
+  background-image: url('/img/ico/icons_light.png');
+}
+
+.screen-toolbar button:active:enabled > div {
+  margin: 1px 0 0 0;
+}
+
+.screen-toolbar.dark-btn button > div {
+  background-image: url('/img/ico/icons_dark.png');
+}
+
+.apply-btn div {
+  background-position: 0px 0px;
+}
+
+.apply-btn[disabled] div {
+  background-position: -24px 0px;
+}
+
+.add-btn div {
+  background-position: -144px 0px;
+}
+
+.add-btn[disabled] div {
+  background-position: -168px 0px;
+}
+
+.enable-btn div {
+  background-position: -96px 0px;
+}
+
+.enable-btn[disabled] div {
+  background-position: -120px 0px;
+}
+
+.disable-btn div {
+  background-position: -240px 0px;
+}
+
+.disable-btn[disabled] div {
+  background-position: -264px 0px;
+}
+
+.edit-btn div {
+  background-position: -48px 0px;
+}
+
+.edit-btn[disabled] div {
+  background-position: -72px 0px;
+}
+
+.delete-btn div {
+  background-position: -288px 0px;
+}
+
+.delete-btn[disabled] div {
+  background-position: -312px 0px;
+}
+
+.cancel-btn div {
+  background-position: -192px 0px;
+}
+
+.cancel-btn[disabled] div {
+  background-position: -216px 0px;
+}
+
+.ok-btn div {
+  background-position: 0px 0px;
+}
+
+.ok-btn[disabled] div {
+  background-position: -24px 0px;
+}
+
+.screen-toolbar button:hover {
+  background-color: #c2c2c2;
+}
+
+.screen-toolbar button:active {
+  background-color: #bdbdbd;
+}
+
+.screen-toolbar button:disabled {
+  background-color: #e0e0e0;
+}
+
+.recipe-editor {
+  display: flex;
+  flex-direction: column;
+  font: 8pt Tahoma;
+}
+
+.recipe-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.recipe {
+  min-height: 25px;
+  user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  text-indent: 10px;
+
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  flex-direction: column;
+}
+
+.recipe input {
+  border-radius: .5em;
+  background-color: #f0f0f0;
+  border: 1px solid grey;
+  text-indent: 4px;
+  min-height: 25px;
+}
+
+.recipe-focus {
+  background-color: dodgerblue;
+}
+
+.recipe-applied {
+  font-weight: bold !important;
+}
+
+button.gap {
+  margin-left: 9px;  
+}
+
+combobox-dropdown {
+  box-shadow: 2px 2px 4px black;
+}

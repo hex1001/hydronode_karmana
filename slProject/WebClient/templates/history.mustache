@@ -1,0 +1,67 @@
+﻿<div class="container-fluid main-container">
+    <div class="row top-bar">
+        <div class="form-group col-lg-4 col-sm-6">
+            <label for="from">{{localization.datetime-start}}</label>
+            <div class="input-group date" id="startDateTimePicker" data-target-input="nearest">
+                <input type="text" name="from" class="form-control datetimepicker-input" data-target="#startDateTimePicker" />
+                
+                <div class="input-group-append" data-target="#startDateTimePicker" data-toggle="datetimepicker">
+                    <div class="input-group-text"><i class="fa fa-calendar-alt"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group col-lg-4 col-sm-6">
+            <label for="to">{{localization.datetime-end}}</label>
+            <div class="input-group date" id="endDateTimePicker" data-target-input="nearest">
+                <input type="text" name="to" class="form-control datetimepicker-input" data-target="#endDateTimePicker"/>
+
+                <div class="input-group-append" data-target="#endDateTimePicker" data-toggle="datetimepicker">
+                    <div class="input-group-text"><i class="fa fa-calendar-alt"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group col-lg-1 col-sm-3">
+            <label for="value-interval">{{localization.time-step}}</label>
+            <input type="number" value="1" min="0.00001" step="any" name="value-interval" class="form-control" />
+        </div>
+        <div class="form-group col-lg-2 col-sm-9">
+            <label for="interval-measure-unit">{{localization.time-step-measure-unit}}</label>
+            <select name="interval-measure-unit" class="form-control">
+                <option value="second">{{localization.time-measure-unit-seconds}}</option>
+                <option value="minute">{{localization.time-measure-unit-minutes}}</option>
+                <option value="hour">{{localization.time-measure-unit-hours}}</option>
+            </select>
+        </div>
+        <div class="col-lg-1 col-12 form-group d-flex align-items-center align-items-lg-end">
+            <button class="btn btn-outline-light text-dark show-history mx-auto mx-lg-0">{{localization.history-span-apply}}</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xl-2 col-lg-3 col-12 left-bar mb-2 mb-lg-0">
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group d-none">
+                        <input name="channel-search" class="form-control" placeholder="{{localization.tag-search-prompt}}" />
+                    </div>
+                    <div class="channel-tree d-flex justify-content-center align-items-center">
+                        <h3 class="loading-icon"><i class="fa fa-spinner fa-spin"></i></h3>
+                        <ul class="block-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-10 col-lg-9 col-12 content">
+            <div class="alert alert-info note"><strong>{{localization.note}}</strong> {{localization.tag-choose-prompt}}</div>
+            <div class="alert alert-danger note"></div>
+            <div class="progress progress-bar-load">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-dark w-100" role="progress-bar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="card history-values">
+                <div class="card-body">
+                    <div id="history-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script  type="text/javascript" src="/js/history.bundle.js"></script>

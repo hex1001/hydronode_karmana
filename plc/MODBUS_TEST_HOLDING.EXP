@@ -1,0 +1,1288 @@
+
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION MB_CRC : WORD
+VAR_INPUT
+	pData: POINTER TO BYTE;		(* указатель на блок данных *)
+	Size: WORD;						(* размер блока  данных *)
+END_VAR
+VAR
+	Cnt: BYTE;							(* счетчик битов *)
+END_VAR
+
+(* @END_DECLARATION := '0' *)
+(* @TEXT_IMPLEMENTATION := 'ST' *)
+(* Вычисление контрольной суммы кадра MODBUS RTU CRC *)
+MB_CRC := 16#FFFF;
+WHILE Size > 0 DO
+	MB_CRC := MB_CRC XOR pData^;
+	FOR Cnt := 0 TO 7 DO
+		IF MB_CRC.0 = 0 THEN
+			MB_CRC := SHR(MB_CRC, 1);
+		ELSE
+			MB_CRC := SHR(MB_CRC, 1) XOR 16#A001;
+		END_IF
+	END_FOR;
+	pData := pData + 1;
+	Size := Size - 1;
+END_WHILE
+END_FUNCTION
+
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION_BLOCK MVA_Decode
+VAR_INPUT
+	p_MVA:POINTER TO ARRAY [0..95] OF BYTE;
+END_VAR
+VAR_OUTPUT
+	Out_MVA: ARRAY [0..7] OF MVA8_AIN;
+END_VAR
+VAR
+	i:WORD:=0;
+	p:POINTER TO BYTE;
+	p1:POINTER TO BYTE;
+END_VAR
+(* @END_DECLARATION := '0' *)
+(* @TEXT_IMPLEMENTATION := 'ST' *)
+FOR i:=0 TO 95 BY 12 DO
+	(*Читаем Сдвиг*)
+	p:=ADR(p_MVA^[i])+1;
+	p1:=ADR(Out_MVA[i/12].dp);
+	p1^:=p^;
+	P1:=P1+1;
+	P:=P-1;
+	p1^:=p^;
+	(*Читаем целое значение*)
+	p:=ADR(p_MVA^[i+2])+1;
+	p1:=ADR(Out_MVA[i/12].read_int);
+	p1^:=p^;
+	P1:=P1+1;
+	P:=P-1;
+	p1^:=p^;
+	(*Читаем статус измерения*)
+	p:=ADR(p_MVA^[i+4])+1;
+	p1:=ADR(Out_MVA[i/12].Error_Code);
+	p1^:=p^;
+	p1:=P1+1;
+	P:=P-1;
+	p1^:=p^;
+	(*Читаем циклическое время измерения*)
+	p:=ADR(p_MVA^[i+6])+1;
+	p1:=ADR(Out_MVA[i/12].cykle_time);
+	p1^:=p^;
+	P1:=P1+1;
+	P:=P-1;
+	p1^:=p^;
+	(*Читаем значение с плавающей точкой*)
+	p:=ADR(p_MVA^[i+8])+3;
+	p1:=ADR(Out_MVA[i/12].read_float);
+	p1^:=p^;
+	P1:=P1+1;
+	P:=P-1;
+	p1^:=p^;
+	p:=ADR(p_MVA^[i+8])+1;
+	p1:=ADR(Out_MVA[i/12].read_float)+2;
+	p1^:=p^;
+	P1:=P1+1;
+	P:=P-1;
+	p1^:=p^;
+END_FOR
+END_FUNCTION_BLOCK
+
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+PROGRAM PLC_PRG_mb
+VAR
+	DD1: Read_Holding_Registers;					(*Блок опроса МВА*)
+	DD2: R_TRIG;									(*Тригер, определяющий готовность блока*)
+	DD3: MVA_Decode;								(*ФБ для расшифровки массива байт принятых по интерфейсу*)
+	(*Входные данные*)
+	DevAdr: BYTE := 16;								(*Адрес подключаемого прибора*)
+	StartAdr: WORD := 0;							(*Адрес первого регистра для чтения*)
+	Quantity: WORD := 48;							(*Число читаемых регистров*)
+	DevNumb: WORD := 0;								(*Номер устройства Universal Network Modules*)
+	t1:TIME:=T#150ms;								(*Максимальная задержка ответа*)
+	t2:TIME:=T#50ms;								(*Пауза между запросами*)
+	(*Результат*)
+	Otvet: ARRAY [0..127] OF BYTE := 128(0);		(*Массив байт принятых от устройства*)
+	ByteCount: WORD;								(*Число принятых байт*)
+	Error: BYTE;									(*Ошибки*)
+	Good_Count: WORD;								(*Число правильных запросов-ответов*)
+	Error_Count: WORD;								(*Число не верных ответов-запросов*)
+	MVA8: ARRAY [0..7] OF MVA8_AIN;					(*Массив структур - результат*)
+	Errors: ARRAY [0..9] OF BYTE;					(*Массив ошибок*)
+	e_count: BYTE;									(*Счетчик ошибок*)
+
+	(*Вывод графика*)
+	channel:BYTE:=3;								(*Номер выхода мва, выводимого на график*)
+	t:REAL:=0;										(*Выводимое значение*)
+END_VAR
+(* @END_DECLARATION := '0' *)
+_CFC_BODY
+_ELEMENT
+_ID: 115
+_MACROID: -1
+_POS: 36, 24
+_TYPE: _COMMENT
+_TEXT: Счетчик не правильных запросов - ответов
+_END
+_ELEMENT
+_ID: 117
+_MACROID: -1
+_POS: 54, 12
+_TYPE: _COMMENT
+_TEXT: Результат опроса МВА8
+_END
+_ELEMENT
+_ID: 116
+_MACROID: -1
+_POS: 22, 6
+_TYPE: _COMMENT
+_TEXT: Тригер для определения прихода ответа
+Запись результатов происходит по тригеру
+_END
+_ELEMENT
+_ID: 114
+_MACROID: -1
+_POS: 36, 17
+_TYPE: _COMMENT
+_TEXT: Счетчик правильных запросов - ответов
+_END
+_ELEMENT
+_ID: 113
+_MACROID: -1
+_POS: 10, 10
+_TYPE: _COMMENT
+_TEXT: Чтение с МВА8 всех регистров
+_END
+_ELEMENT
+_ID: 159
+_MACROID: -1
+_POS: 27, 30
+_TYPE: _COMMENT
+_TEXT: Обработка данных с МВА8
+_END
+_ELEMENT
+_ID: 160
+_MACROID: -1
+_POS: 18, 41
+_TYPE: _COMMENT
+_TEXT: Вывод данных на график
+_END
+_ELEMENT
+_ID: 38
+_MACROID: -1
+_POS: 8, 13
+_TYPE: _INPUT
+_TEXT: TRUE
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 2
+_MACROID: -1
+_POS: 9, 14
+_TYPE: _INPUT
+_TEXT: DevAdr
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 3
+_MACROID: -1
+_POS: 10, 15
+_TYPE: _INPUT
+_TEXT: StartAdr
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 4
+_MACROID: -1
+_POS: 10, 16
+_TYPE: _INPUT
+_TEXT: Quantity
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 5
+_MACROID: -1
+_POS: 9, 17
+_TYPE: _INPUT
+_TEXT: DevNumb
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 39
+_MACROID: -1
+_POS: 7, 18
+_TYPE: _INPUT
+_TEXT: t1
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 43
+_MACROID: -1
+_POS: 7, 19
+_TYPE: _INPUT
+_TEXT: t2
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 93
+_MACROID: -1
+_POS: 25, 21
+_TYPE: _INPUT
+_TEXT: 0
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 107
+_MACROID: -1
+_POS: 46, 21
+_TYPE: _INPUT
+_TEXT: Good_Count
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 108
+_MACROID: -1
+_POS: 42, 22
+_TYPE: _INPUT
+_TEXT: 1
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 97
+_MACROID: -1
+_POS: 46, 28
+_TYPE: _INPUT
+_TEXT: Error_Count
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 98
+_MACROID: -1
+_POS: 42, 29
+_TYPE: _INPUT
+_TEXT: 1
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 136
+_MACROID: -1
+_POS: 16, 34
+_TYPE: _INPUT
+_TEXT: Error
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 134
+_MACROID: -1
+_POS: 16, 35
+_TYPE: _INPUT
+_TEXT: 0
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 142
+_MACROID: -1
+_POS: 21, 38
+_TYPE: _INPUT
+_TEXT: Otvet
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 163
+_MACROID: -1
+_POS: 44, 40
+_TYPE: _INPUT
+_TEXT: Error
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 166
+_MACROID: -1
+_POS: 45, 44
+_TYPE: _INPUT
+_TEXT: e_count
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 168
+_MACROID: -1
+_POS: 43, 45
+_TYPE: _INPUT
+_TEXT: 1
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 170
+_MACROID: -1
+_POS: 53, 51
+_TYPE: _INPUT
+_TEXT: 9
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 173
+_MACROID: -1
+_POS: 62, 51
+_TYPE: _INPUT
+_TEXT: 0
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 1
+_MACROID: -1
+_POS: 10, 11
+_TYPE: _BOX
+_INSTANCE: 1
+_INSTANCENAME: DD1
+_TYPENAME: Read_Holding_Registers
+_ENENO: 0
+_INPUTS: 7
+_IN
+_INPUTID: 38
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 2
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 3
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 4
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 5
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 39
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 43
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 4
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 90
+_MACROID: -1
+_POS: 56, 15
+_TYPE: _OUTPUT
+_TEXT: ByteCount
+_INPUTID: 1
+_INPUTIDX: 2
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 45
+_MACROID: -1
+_POS: 56, 16
+_TYPE: _OUTPUT
+_TEXT: Error
+_INPUTID: 1
+_INPUTIDX: 3
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 181
+_MACROID: -1
+_POS: 46, 36
+_TYPE: _COMMENT
+_TEXT: Архив ошибок
+_END
+_ELEMENT
+_ID: 44
+_MACROID: -1
+_POS: 25, 8
+_TYPE: _BOX
+_INSTANCE: 1
+_INSTANCENAME: DD2
+_TYPENAME: R_TRIG
+_ENENO: 0
+_INPUTS: 1
+_IN
+_INPUTID: 1
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 86
+_MACROID: -1
+_POS: 48, 11
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: MOVE
+_ENENO: 1
+_INPUTS: 1
+_IN
+_INPUTID: 44
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 1
+_INPUTIDX: 1
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 87
+_MACROID: -1
+_POS: 56, 14
+_TYPE: _OUTPUT
+_TEXT: Otvet
+_INPUTID: 86
+_INPUTIDX: 1
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 92
+_MACROID: -1
+_POS: 25, 17
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: <>
+_ENENO: 0
+_INPUTS: 2
+_IN
+_INPUTID: 1
+_INPUTIDX: 3
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 93
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 95
+_MACROID: -1
+_POS: 34, 18
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: AND
+_ENENO: 0
+_INPUTS: 2
+_IN
+_INPUTID: 44
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 92
+_INPUTIDX: 0
+_NEGATE: 1
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 106
+_MACROID: -1
+_POS: 47, 18
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: ADD
+_ENENO: 1
+_INPUTS: 2
+_IN
+_INPUTID: 95
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 107
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 108
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 105
+_MACROID: -1
+_POS: 56, 17
+_TYPE: _OUTPUT
+_TEXT: Good_Count
+_INPUTID: 106
+_INPUTIDX: 1
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 109
+_MACROID: -1
+_POS: 34, 25
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: AND
+_ENENO: 0
+_INPUTS: 2
+_IN
+_INPUTID: 44
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 92
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 96
+_MACROID: -1
+_POS: 47, 25
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: ADD
+_ENENO: 1
+_INPUTS: 2
+_IN
+_INPUTID: 109
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 97
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 98
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 100
+_MACROID: -1
+_POS: 56, 18
+_TYPE: _OUTPUT
+_TEXT: Error_Count
+_INPUTID: 96
+_INPUTIDX: 1
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 133
+_MACROID: -1
+_POS: 17, 32
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: =
+_ENENO: 0
+_INPUTS: 2
+_IN
+_INPUTID: 136
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 134
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 135
+_MACROID: -1
+_POS: 22, 31
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: AND
+_ENENO: 0
+_INPUTS: 2
+_IN
+_INPUTID: 44
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 133
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 132
+_MACROID: -1
+_POS: 23, 36
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: ADR
+_ENENO: 0
+_INPUTS: 1
+_IN
+_INPUTID: 142
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 131
+_MACROID: -1
+_POS: 28, 31
+_TYPE: _BOX
+_INSTANCE: 1
+_INSTANCENAME: DD3
+_TYPENAME: MVA_Decode
+_ENENO: 1
+_INPUTS: 1
+_IN
+_INPUTID: 135
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 132
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 137
+_MACROID: -1
+_POS: 38, 34
+_TYPE: _OUTPUT
+_TEXT: MVA8
+_INPUTID: 131
+_INPUTIDX: 1
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 161
+_MACROID: -1
+_POS: 47, 37
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: MOVE
+_ENENO: 1
+_INPUTS: 1
+_IN
+_INPUTID: 44
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 163
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 162
+_MACROID: -1
+_POS: 52, 40
+_TYPE: _OUTPUT
+_TEXT: Errors[e_count]
+_INPUTID: 161
+_INPUTIDX: 1
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 165
+_MACROID: -1
+_POS: 47, 41
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: ADD
+_ENENO: 1
+_INPUTS: 2
+_IN
+_INPUTID: 44
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 166
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 168
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 167
+_MACROID: -1
+_POS: 56, 44
+_TYPE: _OUTPUT
+_TEXT: e_count
+_INPUTID: 165
+_INPUTIDX: 1
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 169
+_MACROID: -1
+_POS: 53, 47
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: >
+_ENENO: 1
+_INPUTS: 2
+_IN
+_INPUTID: 44
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 165
+_INPUTIDX: 1
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 170
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 171
+_MACROID: -1
+_POS: 62, 48
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: MOVE
+_ENENO: 1
+_INPUTS: 1
+_IN
+_INPUTID: 169
+_INPUTIDX: 1
+_NEGATE: 0
+_END
+_IN
+_INPUTID: 173
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 172
+_MACROID: -1
+_POS: 67, 51
+_TYPE: _OUTPUT
+_TEXT: e_count
+_INPUTID: 171
+_INPUTIDX: 1
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+_ELEMENT
+_ID: 140
+_MACROID: -1
+_POS: 22, 44
+_TYPE: _INPUT
+_TEXT: MVA8[channel-1].read_float
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_ELEMENT
+_ID: 138
+_MACROID: -1
+_POS: 23, 42
+_TYPE: _BOX
+_INSTANCE: 0
+_INSTANCENAME: 
+_TYPENAME: MOVE
+_ENENO: 0
+_INPUTS: 1
+_IN
+_INPUTID: 140
+_INPUTIDX: 0
+_NEGATE: 0
+_END
+_OUTPUTS: 1
+_OUT
+_NEGATE: 0
+_CONNECTOR: 
+_END
+_PARAMETERS: 0
+_END
+_ELEMENT
+_ID: 139
+_MACROID: -1
+_POS: 29, 44
+_TYPE: _OUTPUT
+_TEXT: t
+_INPUTID: 138
+_INPUTIDX: 0
+_NEGATE: 0
+_SETRESET: _NONE
+_END
+
+END_PROGRAM
+
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION_BLOCK Read_Holding_Registers
+
+VAR_INPUT
+	start:BOOL;									(*Разрешение работы блока*)
+	DeviceAdr: BYTE;							(*Адрес устройства*)
+	Start_Adr: WORD;							(*Адрес регистра с которого должно начаться чтение данных*)
+	Quantity: WORD;								(*Число регистров для чтения*)
+	DeviceNumber: WORD;							(*Адрес устройсва Universal Netvork Modul - начинаются с 0 сверху вниз*)
+	Timeout:TIME;								(*Время ожидания ответа*)
+	PollingTime:TIME;							(*Время между запросами*)
+END_VAR
+
+VAR_OUTPUT
+	Ready:BOOL;									(*Готовность ФБ, ответ получен, или сформирована ошибка*)
+	Out: ARRAY [0..127] OF BYTE;				(*Массив принятых байт*)
+	ByteCount:WORD:=0;							(*Число байт в ответе*)
+	Error: BYTE;								(*Код ошибки*)
+END_VAR
+
+VAR
+	command_len: WORD := 8;						(*Длина команды для отправки*)
+	command: ARRAY [0..127] OF BYTE := 128(0);	(*Команда*)
+	command_string: STRING(128):='';			(*Строка команды для отправки*)
+
+	stat:BYTE:=0;								(*Статус работы блока*)
+
+	otvet_RB: POINTER TO RBDATA;				(*Структура ответа*)
+	otvet: ARRAY [0..127] OF BYTE := 128(0);	(*Ответ*)
+	count:INT;									(*Число принятых байт*)
+	otvet_len: WORD;							(*Ожидаемая длина ответа*)
+	otvet_len_error:WORD;						(*Ожидаемая длина ответа при наличии ошибки*)
+	t1: TON;									(*Таймер ожидания ответа*)
+	t2: TON;									(*Таймер между запросами*)
+	modbus_error:BOOL:=FALSE;					(*Флаг, говорящий о том, что устройство прислало ошибку*)
+
+	p:POINTER TO BYTE;							(*Указатели*)
+	p1: POINTER TO BYTE;
+
+	CRC: WORD:=0;								(*Контрольная сумма*)
+	crc1:BYTE:=0;
+	crc2:BYTE:=0;
+
+	i: INT:=0;
+END_VAR
+
+
+
+
+
+(* @END_DECLARATION := '0' *)
+(* @TEXT_IMPLEMENTATION := 'ST' *)
+(*Если модуль не запущен, то освобождаем устройство Universal Netvork Module*)
+IF NOT(start) THEN
+	ReleaseDevice(DeviceNumber);
+	stat:=0;
+	ready:=FALSE;
+ELSE
+(*Если модуль запущен, то работаем с портом*)
+	CASE stat OF
+	0: (*Выполняем захват устройства*)
+		IF(LockDevice(DeviceNumber)=1) THEN
+			stat:=1;
+		ELSE
+			stat:=0;
+		END_IF
+		(*Инициализация переменных*)
+		count:=0;
+		ready:=FALSE;
+		modbus_error:=FALSE;
+
+
+	1:	(*Формируем команду запроса*)
+
+		(*Адрес устройства*)
+		command[0]:=DeviceAdr;
+		(*Номер функции чтения 03h*)
+		command[1]:=3;
+		(*Стартовый адрес регистра*)
+		p:=ADR(Start_Adr);
+		command[3]:=p^;
+		p:=ADR(Start_Adr)+1;
+		command[2]:=p^;
+		(*Число читаемых регистров*)
+		p:=ADR(Quantity);
+		command[5]:=p^;
+		p:=ADR(Quantity)+1;
+		command[4]:=p^;
+		(*Расчет CRC*)
+		p:=ADR(command);
+		CRC:=MB_CRC(p, command_len-2);
+		(*Вставляем в команду CRC*)
+		p:=ADR(CRC);
+		command[6]:=p^;
+		p:=ADR(CRC)+1;
+		command[7]:=p^;
+
+		(*Расчет размера ожидаемого ответа*)
+		otvet_len:=1+1+1+2*Quantity+2;	(*1х Адрес,1х функция,1х число байт,массивданных,2х CRC *)
+		otvet_len_error:=1+1+1+2;		(*1х Адрес,1х ошибка83h,1х исключение,2х CRC *)
+
+		stat:=2;
+
+	2:	(*Копируем команду в строку для работы с модулем SetByte *)
+		FOR i:=0 TO command_len-1 DO
+			p:=ADR(command)+i;
+			p1:=ADR(command_string)+i;
+			p1^:=p^;
+		END_FOR
+
+		stat:=3;
+
+	3:	(*Отсылаем команду*)
+		IF SetByte(DeviceNumber, command_string, command_len)=command_len THEN
+			stat:=4;
+		ELSE
+			stat:=3;
+		END_IF
+
+	4:	(*Запуск таймера ожидания ответа*)
+		t1(IN:=TRUE , PT:=timeout );
+		t1;
+		stat:=5;
+
+	5:	(*Прием ответа*)
+		t1;
+		otvet_RB:=GetByte(DeviceNumber);
+		(*Если получили новый байт, то собираем его в результат*)
+		(*и ведем подсчет принятых байт*)
+		IF otvet_RB>0 THEN
+			p:=ADR(otvet)+count;
+			p^:=otvet_RB^.data;
+			count:=count+1;
+		END_IF
+
+		(*Если получили первый байт, проверяем адрес устройства*)
+		IF count=1 AND otvet[0]<>DeviceAdr AND t1.Q=FALSE THEN
+			error:=1;
+			t1(IN:=FALSE);
+			t1;
+			stat:=6;
+			ready:=TRUE;
+		END_IF
+
+		(*Если получили второй байт, то проверяем размер посылки*)
+		(*Или проверяем код ошибки*)
+		IF count=2  AND t1.Q=FALSE THEN
+			IF otvet[1]<>16#03 AND otvet[1]<>16#83 THEN
+				error:=2;
+				t1(IN:=FALSE);
+				t1;
+				stat:=6;
+				ready:=TRUE;
+			ELSIF otvet[1]=16#83 THEN
+				modbus_error:=TRUE;
+			END_IF
+		END_IF
+
+		(*Если получили третий байт, то проверяем размер посылки*)
+		IF count=3 AND  modbus_error=FALSE AND otvet[2]<>Quantity*2 AND t1.Q=FALSE THEN
+			error:=3;
+			t1(IN:=FALSE);
+			t1;
+			stat:=6;
+			ready:=TRUE;
+		END_IF
+
+		(*Если в ответе был код ошибки, то в третьем байте читаем исключение*)
+		IF count=3 AND modbus_error=TRUE  AND t1.Q=FALSE THEN
+			IF otvet[2]=1 THEN
+				error:=4;
+			ELSIF otvet[2]=2 THEN
+				error:=5;
+			ELSIF otvet[2]=3 THEN
+				error:=6;
+			ELSIF otvet[2]=4 THEN
+				error:=7;
+			ELSE
+				error:=8;
+			END_IF
+		END_IF
+
+		(*Если полностью пришел ошибочный ответ за допустимое время, проверяем CRC*)
+		IF count=otvet_len_error AND modbus_error=TRUE AND t1.Q=FALSE  THEN
+			(*Расчет CRC*)
+			p:=ADR(otvet);
+			CRC:=MB_CRC(p, otvet_len_error-2);
+			p:=ADR(CRC);
+			crc1:=p^;
+			p:=ADR(CRC)+1;
+			crc2:=p^;
+			(*Сверяем CRC*)
+			IF crc1=otvet[otvet_len_error-2] AND crc2=otvet[otvet_len_error-1] THEN
+				error:=error;
+			ELSE
+				error:=9;
+			END_IF
+			t1(IN:=FALSE);
+			t1;
+			stat:=6;
+			ready:=TRUE;
+			modbus_error:=FALSE;
+		END_IF
+
+		(*Если получен ответ за допустимое время ожидания, то проверяем CRC *)
+		(*И формируем результат*)
+		IF count=otvet_len  AND t1.Q=FALSE  THEN
+			(*Расчет CRC*)
+			p:=ADR(otvet);
+			CRC:=MB_CRC(p, otvet_len-2);
+			p:=ADR(CRC);
+			crc1:=p^;
+			p:=ADR(CRC)+1;
+			crc2:=p^;
+			(*Сверяем CRC*)
+			IF crc1=otvet[otvet_len-2] AND crc2=otvet[otvet_len-1] THEN
+				error:=0;
+				(*Выдаем результат*)
+				FOR i:=0 TO Quantity*2-1 DO
+					out[i]:=otvet[3+i];
+				END_FOR
+
+				FOR i:=Quantity*2 TO 127 DO
+					out[i]:=0;
+				END_FOR
+				(*Выдаем число байт в ответе*)
+				ByteCount:=Quantity*2;
+			ELSE
+				error:=10;
+			END_IF
+			t1(IN:=FALSE);
+			t1;
+			stat:=6;
+			ready:=TRUE;
+		END_IF
+
+		IF t1.IN AND t1.Q THEN
+			error:=11;
+			t1(IN:=FALSE);
+			t1;
+			stat:=6;
+			ready:=TRUE;
+		END_IF
+
+	6:	(*Организуем паузу между запросами*)
+		t2(IN:=TRUE , PT:=PollingTime );
+		t2;
+		stat:=7;
+
+	7:	(*Если задержка выполнена,то переходим к новому циклу опроса*)
+		t2;
+		GetByte(DeviceNumber);
+		IF t2.IN AND t2.Q THEN
+			t2(IN:=FALSE);
+			t2;
+			stat:=0;
+		END_IF
+
+	END_CASE
+
+END_IF
+END_FUNCTION_BLOCK

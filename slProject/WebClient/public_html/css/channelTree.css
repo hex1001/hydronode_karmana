@@ -1,0 +1,18 @@
+.channel-tree ul li.jstree-open > a .jstree-themeicon {
+    background-image: url("../img/ico/channelTree/group-open.ico");
+    background-position: center;
+}
+
+.channel-tree ul li.jstree-closed > a .jstree-themeicon {
+    background-image: url("../img/ico/channelTree/group-closed.ico");
+    background-position: center;
+}
+
+.channel-tree ul li.jstree-closed[aria-selected=true] > a .jstree-themeicon {
+    background-image: url("../img/ico/channelTree/group-closed-selected.ico");
+    background-position: center;
+}
+
+.channel-tree ul li.channel > a .jstree-themeicon {
+    display: none;
+}

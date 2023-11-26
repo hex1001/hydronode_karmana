@@ -1,0 +1,28 @@
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+:host {
+  background-color: #f0f0f0;
+  border: 1px solid grey;
+  outline: none;
+  position: fixed;
+  z-index: 9999;
+  max-height: 300px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.items {
+  height: 100%;
+}
+
+.item {
+  font: 12px Tahoma;
+  text-indent: 5px;
+  user-select: none;
+}
+
+.item-select {
+  background-color: dodgerblue;
+}

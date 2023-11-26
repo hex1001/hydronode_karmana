@@ -1,0 +1,37 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="absolute-center is-responsive">     
+            <div class="col-sm-12 col-md-10 col-md-offset-1">
+                <div class="logo-container">
+                    <a class="logo" href="#"><img src="/img/logo.png" alt="SimpLight" /><span class="logo-title">SimpLight</span></a>
+                </div>
+
+                <form id="signInForm">
+                    <!-- Login field -->
+                    <div class="mb-3 input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="userIconSpan"><i class="fa fa-user" aria-hidden="true"></i></span>
+                        </div>
+                        <input name="login" class="form-control" id="login" aria-label="{{localization.sign-in-login}}" placeholder="{{localization.sign-in-login}}" aria-describedby="userIconSpan" />
+                    </div>
+
+                    <!-- Password field -->
+                    <div class="mb-3 input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="passwordIconSpan"><i class="fa fa-unlock-alt" aria-hidden="true"></i></span>
+                        </div>  
+                        <input type="password" name="password" class="form-control" id="password" aria-label="{{localization.sign-in-password}}" placeholder="{{localization.sign-in-password}}" aria-describedby="passwordIconSpan" />
+                    </div>
+
+                    <div class="form-group">
+                        <div class="text-warning text-center fail-reason"></div>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary btn-block sign-in">{{localization.sign-in-sign-in}}</button>
+                    </div>        
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/js/signIn.bundle.js"></script>
